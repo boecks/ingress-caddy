@@ -514,4 +514,10 @@ Generate the Caddyfile content
 
 # ── Site routes (managed via ConfigMap caddy-routes) ───────────────────────────
 import /etc/caddy/routes/*.caddy
+
+{{- if .Values.caddyfile.extraSiteBlocks }}
+
+# ── Extra site blocks (from caddyfile.extraSiteBlocks) ─────────────────────────
+{{ .Values.caddyfile.extraSiteBlocks | trim }}
+{{- end }}
 {{- end }}

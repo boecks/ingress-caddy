@@ -440,6 +440,10 @@ tracing:
 # See https://caddyserver.com/docs/caddyfile/options for all supported options.
 caddyfile:
   extraGlobalOptions: ""
+  # Raw Caddyfile site blocks appended after the placeholder :80/:443 servers.
+  # Placed in the Caddyfile ConfigMap so k8s_config_reloader auto-reloads on change.
+  # Has access to all chart-generated snippets: (security), (internal_ranges), (external_ranges), (upstream)
+  extraSiteBlocks: ""
 
 # ── Admin API ──────────────────────────────────────────────────────────────────
 
