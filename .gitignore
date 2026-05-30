@@ -7,3 +7,6 @@ helm/values.local.yaml
 # Local dev/test values — not for production
 minikube-values.yaml
 *.local.yaml
+
+.claude
+CLAUDE.md
