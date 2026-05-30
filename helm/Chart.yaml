@@ -21,8 +21,3 @@ keywords:
   - acme
   - eab
 
-dependencies:
-  - name: redis
-    version: "25.3.9"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: redis.enabled
