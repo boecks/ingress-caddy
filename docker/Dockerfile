@@ -21,6 +21,8 @@ RUN set -eux; \
     --with github.com/mholt/caddy-ratelimit@v0.1.0 \
     --with github.com/caddyserver/cache-handler@v0.16.0 \
     --with github.com/porech/caddy-maxmind-geolocation@v1.0.3 \
+    --with github.com/caddy-dns/cloudflare \
+    --with github.com/WeidiDeng/caddy-cloudflare-ip \
     --with github.com/hslatman/caddy-crowdsec-bouncer@v0.12.1 \
     --with pkg.jsn.cam/caddy-defender=github.com/jasonlovesdoggo/caddy-defender@v0.10.0 \
     --with github.com/greenpau/caddy-security@v1.1.62 \

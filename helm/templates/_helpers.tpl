@@ -270,11 +270,19 @@ Generate the Caddyfile content
   {{- end }}
 
   servers {
-    {{- if .Values.realIP.enabled }}
+    {{- if .Values.realIP.cloudflare.enabled }}
+    trusted_proxies cloudflare {
+      interval {{ .Values.realIP.cloudflare.interval }}
+      timeout  {{ .Values.realIP.cloudflare.timeout }}
+    }
+    {{- else if .Values.realIP.enabled }}
     trusted_proxies static {{ join " " .Values.realIP.trustedProxies }}
+    {{- end }}
     {{- if .Values.realIP.strict }}
     trusted_proxies_strict
     {{- end }}
+    {{- if .Values.realIP.clientIpHeaders }}
+    client_ip_headers {{ join " " .Values.realIP.clientIpHeaders }}
     {{- end }}
     {{- if .Values.metrics.enabled }}
     metrics
@@ -333,6 +341,21 @@ Generate the Caddyfile content
   {{- end }}
 }
 
+{{- if .Values.realIP.internalRanges }}
+
+# ── LAN / trusted range snippets ───────────────────────────────────────────────
+# Generated from realIP.internalRanges — import in route files as needed.
+(internal_ranges) {
+  client_ip {{ join " " .Values.realIP.internalRanges }}
+}
+
+(external_ranges) {
+  not {
+    import internal_ranges
+  }
+}
+{{- end }}
+
 # ── Reusable security snippet ───────────────────────────────────────────────────
 # Usage in route files:  import security
 (security) {
@@ -351,24 +374,40 @@ Generate the Caddyfile content
   }
   {{- end }}
 
+  {{- if .Values.plugins.geoip.enabled }}
+  @geoblock {
+    {{- if .Values.plugins.geoip.allowedCountries }}
+    not maxmind_geolocation {
+      db_path {{ .Values.plugins.geoip.dbPath }}
+      allow_countries {{ join " " .Values.plugins.geoip.allowedCountries }}
+    }
+    {{- else }}
+    maxmind_geolocation {
+      db_path {{ .Values.plugins.geoip.dbPath }}
+      {{- if .Values.plugins.geoip.deniedCountries }}
+      deny_countries {{ join " " .Values.plugins.geoip.deniedCountries }}
+      {{- end }}
+    }
+    {{- end }}
+    {{- if .Values.realIP.internalRanges }}
+    import external_ranges
+    {{- end }}
+  }
+  respond @geoblock "Forbidden" 403
+  {{- end }}
+
   {{- if .Values.plugins.crowdsec.enabled }}
+  {{- if .Values.realIP.internalRanges }}
+  crowdsec @geoblock
+  {{- else }}
   crowdsec
+  {{- end }}
   {{- end }}
 
   {{- if .Values.plugins.defender.enabled }}
   defender {
     action {{ .Values.plugins.defender.action }}
   }
-  {{- end }}
-
-  {{- if .Values.plugins.geoip.enabled }}
-  @geoblock maxmind_geolocation {
-    db_path {{ .Values.plugins.geoip.dbPath }}
-    {{- if .Values.plugins.geoip.deniedCountries }}
-    deny_countries {{ join " " .Values.plugins.geoip.deniedCountries }}
-    {{- end }}
-  }
-  respond @geoblock "Forbidden" 403
   {{- end }}
 
   {{- if .Values.plugins.rateLimit.enabled }}
@@ -384,7 +423,7 @@ Generate the Caddyfile content
   {{- if .Values.securityHeaders.enabled }}
   header {
     {{- if .Values.securityHeaders.hsts.enabled }}
-    Strict-Transport-Security "max-age={{ .Values.securityHeaders.hsts.maxAge }}{{- if .Values.securityHeaders.hsts.includeSubDomains }}; includeSubDomains{{- end }}{{- if .Values.securityHeaders.hsts.preload }}; preload{{- end }}"
+    Strict-Transport-Security "max-age={{ .Values.securityHeaders.hsts.maxAge | int }}{{- if .Values.securityHeaders.hsts.includeSubDomains }}; includeSubDomains{{- end }}{{- if .Values.securityHeaders.hsts.preload }}; preload{{- end }}"
     {{- end }}
     {{- if .Values.securityHeaders.xContentTypeOptions }}
     X-Content-Type-Options "nosniff"

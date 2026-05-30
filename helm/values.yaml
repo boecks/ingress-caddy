@@ -57,12 +57,18 @@ plugins:
     redis:
       address: ""               # e.g. redis.redis.svc.cluster.local:6379
 
-  # MaxMind GeoIP country-level blocking (porech/caddy-maxmind-geolocation)
+  # MaxMind GeoIP country-level filtering (porech/caddy-maxmind-geolocation)
   geoip:
     enabled: false
     dbPath: /data/geoip/GeoLite2-Country.mmdb
-    # ISO 3166-1 alpha-2 country codes to block
-    deniedCountries: []         # ["CN", "RU", "KP", "IR"]
+    # Allowlist — only these countries may pass; all others are blocked.
+    # When set, takes precedence over deniedCountries.
+    # ISO 3166-1 alpha-2 codes, e.g. ["AT"]
+    allowedCountries: []
+    # Denylist — block these countries; all others pass.
+    # Only used when allowedCountries is empty.
+    # ISO 3166-1 alpha-2 codes, e.g. ["CN", "RU", "KP", "IR"]
+    deniedCountries: []
     # Init container to download/refresh the MaxMind database
     updater:
       enabled: false
@@ -341,6 +347,25 @@ realIP:
   # Inject X-Real-IP and X-Forwarded-* upstream — required by Mailu's nginx
   # and other nginx-based backends that rely on these headers for real client IP
   injectXRealIP: true
+
+  # ── Cloudflare trusted proxies ─────────────────────────────────────────────
+  # When enabled, replaces trustedProxies with the caddy-cloudflare-ip module
+  # which auto-refreshes Cloudflare's published IP ranges.
+  # Requires caddy-cloudflare-ip compiled into the image.
+  cloudflare:
+    enabled: false
+    interval: 12h   # how often to refresh the Cloudflare IP list
+    timeout: 15s    # HTTP timeout for the refresh request
+
+  # Headers Caddy should inspect to find the real client IP.
+  # Behind Cloudflare: ["Cf-Connecting-IP", "X-Forwarded-For"]
+  clientIpHeaders: []
+
+  # ── LAN / trusted range bypass ─────────────────────────────────────────────
+  # CIDRs that skip GeoIP blocking and CrowdSec entirely.
+  # Generates (internal_ranges) and (external_ranges) Caddyfile snippets.
+  # Example: ["10.0.0.0/12", "172.16.0.0/16", "192.168.0.0/16"]
+  internalRanges: []
 
 # ── Security headers ───────────────────────────────────────────────────────────
 
